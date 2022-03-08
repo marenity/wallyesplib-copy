@@ -1,19 +1,33 @@
---Settings--
+-- Written by Kiriot22
+-- Modifications made by wally
+
+-- Settings
 local ESP = {
+	-- flags
 	Enabled = false,
-	Boxes = true,
-	BoxShift = CFrame.new(0,-1.5,0),
-	BoxSize = Vector3.new(4,6,0),
-	Color = Color3.fromRGB(255, 170, 0),
-	FaceCamera = false,
+	Players = true,
+
+	-- components
 	Names = true,
+	Boxes = true,
+	Tracers = false,
+
+	-- options
+	FaceCamera = false,
 	TeamColor = true,
+	TeamMates = true,
+
+	Font = 'UI',
+	TextSize = 19,
+
+	BoxShift = CFrame.new(0, -1.5, 0),
+	BoxSize = Vector3.new(4, 6, 0),
+	Color = Color3.fromRGB(255, 170, 0),
+
 	Thickness = 2,
 	AttachShift = 1,
-	TeamMates = true,
-	Players = true,
-	
-	Objects = setmetatable({}, {__mode="kv"}),
+
+	Objects = setmetatable({}, { __mode = "kv" }),
 	Overrides = {}
 }
 
@@ -36,6 +50,8 @@ local function Draw(obj, props)
 	end
 	return new
 end
+
+ESP.Draw = Draw
 
 function ESP:GetTeam(p)
 	local ov = self.Overrides.GetTeam
@@ -182,19 +198,22 @@ function boxBase:Update()
 		color = ESP.HighlightColor
 	end
 
+	local IsPlrHighlighted = (ESP.Highlighted == self.Object and self.Player ~= nil)
+
 	--calculations--
 	local cf = self.PrimaryPart.CFrame
 	if ESP.FaceCamera then
 		cf = CFrame.new(cf.p, cam.CFrame.p)
 	end
+
 	local size = self.Size
 	local locs = {
-		TopLeft = cf * ESP.BoxShift * CFrame.new(size.X/2,size.Y/2,0),
-		TopRight = cf * ESP.BoxShift * CFrame.new(-size.X/2,size.Y/2,0),
-		BottomLeft = cf * ESP.BoxShift * CFrame.new(size.X/2,-size.Y/2,0),
-		BottomRight = cf * ESP.BoxShift * CFrame.new(-size.X/2,-size.Y/2,0),
-		TagPos = cf * ESP.BoxShift * CFrame.new(0,size.Y/2,0),
-		Torso = cf * ESP.BoxShift
+		TopLeft 	= cf * ESP.BoxShift * CFrame.new(size.X   / 2,  size.Y / 2, 0),
+		TopRight 	= cf * ESP.BoxShift * CFrame.new(-size.X  / 2,  size.Y / 2, 0),
+		BottomLeft 	= cf * ESP.BoxShift * CFrame.new(size.X   / 2, -size.Y / 2, 0),
+		BottomRight = cf * ESP.BoxShift * CFrame.new(-size.X  / 2, -size.Y / 2, 0),
+		TagPos 		= cf * ESP.BoxShift * CFrame.new(0,			 	size.Y / 2, 0),
+		Torso 		= cf * ESP.BoxShift
 	}
 
 	if ESP.Boxes then
@@ -211,6 +230,8 @@ function boxBase:Update()
 				self.Components.Quad.PointC = Vector2.new(BottomLeft.X, BottomLeft.Y)
 				self.Components.Quad.PointD = Vector2.new(BottomRight.X, BottomRight.Y)
 				self.Components.Quad.Color = color
+
+				self.Components.Quad.ZIndex = IsPlrHighlighted and 2 or 1
 			else
 				self.Components.Quad.Visible = false
 			end
@@ -232,6 +253,17 @@ function boxBase:Update()
 			self.Components.Distance.Position = Vector2.new(TagPos.X, TagPos.Y + 14)
 			self.Components.Distance.Text = math.floor((cam.CFrame.p - cf.p).magnitude) .."m away"
 			self.Components.Distance.Color = color
+
+			self.Components['Name'].Size = ESP.FontSize
+			self.Components['Distance'].Size = ESP.FontSize
+
+			self.Components['Name'].ZIndex = IsPlrHighlighted and 2 or 1
+			self.Components['Distance'].ZIndex = IsPlrHighlighted and 2 or 1
+
+			if Drawing.Fonts and Drawing.Fonts[ESP.Font] then
+				self.Components['Name'].Font = Drawing.Fonts[ESP.Font]
+				self.Components['Distance'].Font = Drawing.Fonts[ESP.Font]
+			end
 		else
 			self.Components.Name.Visible = false
 			self.Components.Distance.Visible = false
@@ -249,6 +281,8 @@ function boxBase:Update()
 			self.Components.Tracer.From = Vector2.new(TorsoPos.X, TorsoPos.Y)
 			self.Components.Tracer.To = Vector2.new(cam.ViewportSize.X/2,cam.ViewportSize.Y/ESP.AttachShift)
 			self.Components.Tracer.Color = color
+
+			self.Components['Tracer'].ZIndex = IsPlrHighlighted and 2 or 1
 		else
 			self.Components.Tracer.Visible = false
 		end
@@ -288,19 +322,21 @@ function ESP:Add(obj, options)
 		Filled = false,
 		Visible = self.Enabled and self.Boxes
 	})
+
 	box.Components["Name"] = Draw("Text", {
 		Text = box.Name,
 		Color = box.Color,
 		Center = true,
 		Outline = true,
-		Size = 19,
+		Size = self.TextSize,
 		Visible = self.Enabled and self.Names
 	})
+
 	box.Components["Distance"] = Draw("Text", {
 		Color = box.Color,
 		Center = true,
 		Outline = true,
-		Size = 19,
+		Size = self.TextSize,
 		Visible = self.Enabled and self.Names
 	})
 	
