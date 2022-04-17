@@ -28,7 +28,9 @@ local ESP = {
 	AttachShift = 1,
 
 	Objects = setmetatable({}, { __mode = "kv" }),
-	Overrides = {}
+	Overrides = {},
+
+	IgnoreHumanoids = false,
 }
 
 --Declarations--
@@ -206,6 +208,16 @@ function boxBase:Update()
 		cf = CFrame.new(cf.p, cam.CFrame.p)
 	end
 
+	local distance = math.floor((cam.CFrame.p - cf.p).magnitude)
+	if self.Player and ESP.UsePlrDistance and distance > ESP.MaxPlrDistance then
+		for i,v in pairs(self.Components) do
+			v.Visible = false
+		end
+		return
+	end
+
+	self.Distance = distance;
+
 	local size = self.Size
 	local locs = {
 		TopLeft 	= cf * ESP.BoxShift * CFrame.new(size.X   / 2,  size.Y / 2, 0),
@@ -251,7 +263,7 @@ function boxBase:Update()
 			
 			self.Components.Distance.Visible = true
 			self.Components.Distance.Position = Vector2.new(TagPos.X, TagPos.Y + 14)
-			self.Components.Distance.Text = math.floor((cam.CFrame.p - cf.p).magnitude) .."m away"
+			self.Components.Distance.Text = distance .."m away"
 			self.Components.Distance.Color = color
 
 			self.Components['Name'].Size = ESP.FontSize
@@ -360,7 +372,7 @@ function ESP:Add(obj, options)
 	end)
 
 	local hum = obj:FindFirstChildOfClass("Humanoid")
-	if hum then
+	if hum and (not ESP.IgnoreHumanoids) then
 		hum.Died:Connect(function()
 			if ESP.AutoRemove ~= false then
 				box:Remove()
